@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+import 'quiz.dart';
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +28,51 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Icon> _answerTracker = [];
+  Quiz _quiz = Quiz();
+
+  void _updateScoreAndNext(bool answer) {
+    setState(() {
+      if (answer == _quiz.getAnswer()) {
+        _quiz.increaseScore();
+        _answerTracker.add(
+          Icon(
+            Icons.check,
+            color: Colors.green,
+          ),
+        );
+      } else {
+        _answerTracker.add(
+          Icon(
+            Icons.close,
+            color: Colors.red,
+          ),
+        );
+      }
+      bool more = _quiz.nextQuestion();
+      if (more == false) {
+        Alert(
+          context: context,
+          type: AlertType.success,
+          title: "Quiz Ended",
+          desc: "This quiz has ended, you scored ${_quiz.getScore()}.",
+          buttons: [
+            DialogButton(
+              child: Text(
+                "Cool",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              onPressed: () => Navigator.pop(context),
+              width: 120,
+            )
+          ],
+        ).show();
+        _answerTracker.clear();
+        _quiz.clearScore();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +85,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                _quiz.getQuestion(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -61,7 +109,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //The user picked true.
+                _updateScoreAndNext(true);
               },
             ),
           ),
@@ -79,12 +127,29 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
               onPressed: () {
-                //The user picked false.
+                _updateScoreAndNext(false);
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Row(
+          children: <Widget>[
+            Expanded(
+              flex: 5,
+              child: Row(
+                children: _answerTracker,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                _quiz.getScore(),
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            )
+          ],
+        )
       ],
     );
   }
